@@ -1,11 +1,14 @@
 #include <iostream>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 #include <thread>
 #include <chrono>
+#include <fstream>
+#include <sstream>
 using namespace std;
 
-unordered_set<string> registeredEmails;
+unordered_map<string, string> registeredUsers; // Email to Password mapping
 unordered_set<string> registeredContacts;
 
 const string fixedUsername = "admin";
@@ -16,25 +19,57 @@ bool isPasswordValid(const string& password, const string& confirmPassword) {
 }
 
 bool isUniqueRegistration(const string& email, const string& contact) {
-    return registeredEmails.find(email) == registeredEmails.end() && 
+    return registeredUsers.find(email) == registeredUsers.end() &&
            registeredContacts.find(contact) == registeredContacts.end();
 }
 
+void loadUserData() {
+    ifstream inputFile("users.txt");
+    if (inputFile.is_open()) {
+        string line;
+        while (getline(inputFile, line)) {
+            stringstream ss(line);
+            string email, password, contact;
+            if (getline(ss, email, ',') && getline(ss, password, ',') && getline(ss, contact)) {
+                registeredUsers[email] = password;
+                registeredContacts.insert(contact);
+            }
+        }
+        inputFile.close();
+    }
+}
+
+void saveUserData() {
+    ofstream outputFile("users.txt");
+    if (outputFile.is_open()) {
+        for (const auto& pair : registeredUsers) {
+            outputFile << pair.first << "," << pair.second << "," << *registeredContacts.find(pair.first) << endl;
+        }
+        outputFile.close();
+    }
+}
+
 void login() {
-    string username, password;
+    string email, password;
     int attempts = 0;
 
     while (attempts < 3) {
-        cout << "\nEnter Username: ";
-        cin >> username;
+        cout << "\nEnter Email: ";
+        cin >> email;
+        cin.ignore();
         cout << "Enter Password: ";
-        cin >> password;
+        getline(cin, password);
 
-        if (username == fixedUsername && password == fixedPassword) {
+        if (email == fixedUsername && password == fixedPassword) {
+            cout << "\nLogin Successful! (Admin)\n";
+            return;
+        }
+
+        if (registeredUsers.find(email) != registeredUsers.end() && registeredUsers[email] == password) {
             cout << "\nLogin Successful!\n";
             return;
         } else {
-            cout << "\nIncorrect Username or Password. Try again.\n";
+            cout << "\nIncorrect Email or Password. Try again.\n";
             attempts++;
         }
     }
@@ -73,7 +108,7 @@ void registerUser() {
     // Validate password
     if (isPasswordValid(password, confirmPassword)) {
         // Store email and contact as registered
-        registeredEmails.insert(email);
+        registeredUsers[email] = password;
         registeredContacts.insert(contact);
 
         cout << "\nRegistration Successful\n";
@@ -82,14 +117,18 @@ void registerUser() {
         cout << "Contact: " << contact << endl;
         cout << "Address: " << address << endl;
         cout << "NID: " << nid << endl;
+
+        saveUserData(); // Save user data to file
     } else {
         cout << "\nPassword mismatch! Please try again.\n";
     }
 }
 
 int main() {
+    loadUserData(); // Load user data from file
+
     cout << "\nWelcome to Swift Book. Fastest Online Ticket Reservation System\n";
-    
+
     while (true) {
         cout << "\nChoose an option:\n";
         cout << "1. Register\n";
