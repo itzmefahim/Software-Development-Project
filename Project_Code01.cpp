@@ -38,10 +38,6 @@ void login() {
             attempts++;
         }
     }
-    
-    cout << "\nToo many failed attempts. Locking for 30 seconds...\n";
-    this_thread::sleep_for(chrono::seconds(30));
-    cout << "\nYou can try logging in again.\n";
 }
 
 void registerUser() {
