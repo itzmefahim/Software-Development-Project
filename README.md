@@ -1,4 +1,4 @@
-# Software-Development-Project
+# Software_Development_Project
 Project Name: Online Ticket Reservation System (Swift Book)
 <br>
 Group Name: Tech Hunters
